@@ -198,7 +198,7 @@ class Board:
 
 	# Get most likely tile to escape rng deadlock
 	def probability(self,x,y):
-		chances=[self.baseChance]
+		chance=self.baseChance
 		for nX,nY,sideCell in self.neighbourIter(x,y):
 			if type(sideCell)!=int:
 				continue
@@ -211,9 +211,11 @@ class Board:
 				elif sideCellSide=="Hidden":
 					empty+=1
 
-			chances+=[(sideCell-sidebombs)/empty]
+			thisChance=(sideCell-sidebombs)/empty
+			if thisChance>chance:
+				chance=(sideCell-sidebombs)/empty
 
-		return sum(chances)/len(chances)
+		return chance
 
 	# get cells least likely to have bombs
 	def getBestCandidates(self):
