@@ -16,10 +16,11 @@ colorStr=lambda r,g,b: f"\033[48;2;{r};{g};{b}m  \033[0m "
 
 class Board:
 	def __init__(self,screenshot,winPos=None):
-		if winPos==None:
-			self.winPos=pag.locateOnScreen('TopLeft.png')[:2]
+		if not winPos:
+			self.pCornerPos=pag.locateOnScreen('Corner.png')[:2]
+			self.winPos=(self.pCornerPos[0],self.pCornerPos[1]-22)
 		else:
-			self.winPos=winPos
+			self.winPos=winPos # start of the content, below the [x] buttons
 		self.boardPos=(self.winPos[0]+12,self.winPos[1]+74) #top left of playfield
 		self.bombNpos=(self.winPos[0]+18,self.winPos[1]+36) #top left of bomb counter
 
@@ -183,9 +184,11 @@ class Board:
 			pag.click(self.cellMid(x,y),button="right")
 			self.board[y][x]="Hidden"
 
-	def exposeCell(self,x,y):
+	def exposeCell(self,x,y,certain=False):
 		if self.board[y][x]=="Hidden":
 			pag.click(self.cellMid(x,y),button="left")
+			if certain:
+				self.board[y][x]="Solved"
 
 	def newGame(self):
 		pag.click(self.winPos[0]+(self.boardWidth/2),self.winPos[1]+45)
@@ -195,7 +198,7 @@ class Board:
 
 	# Get most likely tile to escape rng deadlock
 	def probability(self,x,y):
-		chance=self.baseChance
+		chances=[self.baseChance]
 		for nX,nY,sideCell in self.neighbourIter(x,y):
 			if type(sideCell)!=int:
 				continue
@@ -208,10 +211,9 @@ class Board:
 				elif sideCellSide=="Hidden":
 					empty+=1
 
-			thisChance=(sideCell-sidebombs)/empty
-			chance=(chance+thisChance)/2
+			chances+=[(sideCell-sidebombs)/empty]
 
-		return chance
+		return sum(chances)/len(chances)
 
 	# get cells least likely to have bombs
 	def getBestCandidates(self):
@@ -252,7 +254,7 @@ class Board:
 
 			elif sideFlags==bombsAround:
 				for safe in sideHidden:
-					self.exposeCell(*safe)
+					self.exposeCell(*safe,certain=True)
 					smthHappened=True
 					callback and callback("elimination",safe)
 
@@ -266,11 +268,13 @@ class Board:
 board=Board(pag.screenshot())
 
 def callback(eventType,data):
+	sleep(1)
 	if eventType=="collection":
 		print(colorStr(0,255,255)+f"By law of collection, {data} is a bomb")
 	elif eventType=="elimination":
 		print(colorStr(0,255,255)+f"By law of elimination, {data} is not a bomb!")
 	elif eventType=="rng":
+		input()
 		fraction=Fraction(data[2]).limit_denominator(1000000)
 		print(
 			colorStr(206,92,0)+
