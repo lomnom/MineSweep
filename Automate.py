@@ -268,7 +268,6 @@ class Board:
 board=Board(pag.screenshot())
 
 def callback(eventType,data):
-	sleep(1)
 	if eventType=="collection":
 		print(colorStr(0,255,255)+f"By law of collection, {data} is a bomb")
 	elif eventType=="elimination":
