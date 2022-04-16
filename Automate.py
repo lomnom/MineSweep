@@ -273,7 +273,6 @@ def callback(eventType,data):
 	elif eventType=="elimination":
 		print(colorStr(0,255,255)+f"By law of elimination, {data} is not a bomb!")
 	elif eventType=="rng":
-		input()
 		fraction=Fraction(data[2]).limit_denominator(1000000)
 		print(
 			colorStr(206,92,0)+
