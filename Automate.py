@@ -17,7 +17,12 @@ colorStr=lambda r,g,b: f"\033[48;2;{r};{g};{b}m  \033[0m "
 class Board:
 	def __init__(self,screenshot,winPos=None):
 		if not winPos:
-			self.pCornerPos=pag.locateOnScreen('Corner.png')[:2]
+			try:
+				self.pCornerPos=pag.locateOnScreen('Corner.png')[:2] #locates corner of playing field
+			except TypeError:
+				raise ValueError(
+					"Could not locate window on screen! Make sure the minesweeper window is visible!"
+				)
 			self.winPos=(self.pCornerPos[0],self.pCornerPos[1]-22)
 		else:
 			self.winPos=winPos # start of the content, below the [x] buttons
