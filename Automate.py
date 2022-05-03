@@ -25,6 +25,12 @@ class Board:
 		self.bombNpos=(self.winPos[0]+18,self.winPos[1]+36) #top left of bomb counter
 
 		self.refreshBoardSize(screenshot)
+
+		self.timePos=(
+			self.boardPos[0]+self.boardWidth-65,self.boardPos[1]-38
+		) #top left of time counter
+		pag.moveTo(*self.timePos)
+
 		self.refreshBoardState(screenshot)
 
 	def cell(self,x,y,offset=0): #macro to calculate coordinates of a cell
@@ -88,10 +94,17 @@ class Board:
 			states+=[int(screenshot.getpixel((wX,wY)) == (255,0,0))]
 		return self.digits[tuple(states)]
 
+	def readNum(self,x,y,screenshot):
+		result=self.readSegment(x,y,screenshot)*100
+		result+=self.readSegment(x+13,y,screenshot)*10
+		result+=self.readSegment(x+26,y,screenshot)
+		return result
+
 	def refreshBombs(self,screenshot):
-		self.bombs=self.readSegment(self.bombNpos[0],self.bombNpos[1],screenshot)*100
-		self.bombs+=self.readSegment(self.bombNpos[0]+13,self.bombNpos[1],screenshot)*10
-		self.bombs+=self.readSegment(self.bombNpos[0]+26,self.bombNpos[1],screenshot)
+		self.bombs=self.readNum(*self.bombNpos,screenshot)
+
+	def refreshTime(self,screenshot):
+		self.time=self.readNum(*self.timePos,screenshot)
 
 	# lookup table for cell colours
 	numCols={
@@ -141,6 +154,7 @@ class Board:
 
 	def refreshBoardState(self,screenshot):
 		self.refreshBombs(screenshot)
+		self.refreshTime(screenshot)
 		self.refreshCells(screenshot)
 		self.refreshBaseChance()
 
@@ -224,7 +238,10 @@ class Board:
 			for x in range(self.boardSize[0]):
 				if self.board[y][x]=="Hidden":
 					possibilities+=[[x,y,self.probability(x,y)]]
-
+		possibilities=sorted(
+			possibilities,
+			key=lambda item: item[2]
+		)
 
 		primeChance=possibilities[0][2]
 		for index,possibility in enumerate(possibilities):
@@ -269,7 +286,10 @@ class Board:
 
 board=Board(pag.screenshot())
 
+won,lost=0,0
+wonT,lostT=0,0
 def callback(eventType,data):
+	global won,lost,wonT,lostT
 	if eventType=="collection":
 		print(colorStr(0,255,255)+f"By law of collection, {data} is a bomb")
 	elif eventType=="elimination":
@@ -283,9 +303,18 @@ def callback(eventType,data):
 		)
 	elif eventType=="new":
 		if data=="Won":
-			print(colorStr(0,255,20)+"Won!")
+			print(colorStr(0,255,20)+f"Won with time {board.time}!")
+			won+=1
+			wonT+=board.time
 		else:
 			print(colorStr(128,0,0)+"Lost...")
+			lost+=1
+			lostT+=board.time
 
-while True:
-	board.advance(callback=callback)
+try:
+	while True:
+		board.advance(callback=callback)
+except KeyboardInterrupt:
+	avgWon=wonT/won if won!=0 else None
+	avgLost=lostT/lost if lost!=0 else None
+	print(f"\rWon {won} (agvT: {avgWon}), lost {lost} (avgT: {avgLost})")
