@@ -1,5 +1,5 @@
 # MineSweep, a python scipt that solves minesweeper!
-![B)](https://cdn.discordapp.com/attachments/881463505755197460/970891587682959370/unknown.png)
+![B)](https://i.redd.it/qiepzjh7096e1.jpeg)
 
 ## Dependencies
 This script requires `pyautogui` to work! Install it with `pip3 install pyautogui`
